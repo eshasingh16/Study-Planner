@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Aurelia - Ultimate AI Study Assistant for JEE, NEET, UPSC, GATE & Boards.">
+<title>Aurelia Pro - Advanced Study Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;
+500;600;700;800&family=Playfair+Display:ital,wght@0,400..900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-
+awesome/6.5.1/css/all.min.css">
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+:root {
+  --bg-primary: linear-gradient(135deg, #000428 0%,
+   #004e92 25%, #002e5d 50%, #0f2027 100%);
+  --bg-secondary: linear-gradient(135deg, #1a1a2e 0%,
+   #16213e 50%, #0f3460 100%);
+  --glass-bg: rgba(255,255,255,0.1);
+  --glass-border: rgba(255,255,255,0.2);
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --accent-blue: linear-gradient(90deg, #0ea5e9,
+   #38bdf8, #0ea5e9);
+  --accent-cyan: #06b6d4;
+  --accent-purple: #8b5cf6;
+  --accent-green: #10b981;
+  --accent-orange: #f59e0b;
+  --shadow-lg: 0 25px 50px -12px rgba(0,0,0,0.5);
+  --shadow-glass: 0 8px 32px rgba(0,0,0,0.3);
+  --radius: 24px;
+}
+
+[data-theme="light"] {
+  --bg-primary: linear-gradient(135deg, #2193b0 0%, 
+  #6dd5ed 50%, #38bdf8 100%);
+  --bg-secondary: #f0f9ff;
+  --glass-bg: rgba(255,255,255,0.9);
+  --glass-border: rgba(0,0,0,0.1);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Poppins',sans-serif;
+ background:var(--bg-primary); color:var(--text-primary); 
+ min-height:100vh; height:100vh; width:100%; transition: background 0.5s ease; overflow: hidden; }
+#root { height:100vh; width:100%; display:flex; flex-direction:column; }
+
+.login { height:100vh; display:flex; justify-content:center; 
+    align-items:center; }
+.login-box { background:var(--glass-bg); backdrop-filter:blur(20px);
+     padding:50px; border-radius:var(--radius); width:90%; max-width:450px; 
+     text-align:center; border:1px solid var(--glass-border); box-shadow:var(--shadow-glass); }
+
+.nav { display:flex; justify-content:space-between; align-items:center;
+     padding:15px 5%; background:var(--glass-bg); backdrop-filter:blur(20px); 
+     border-bottom:1px solid var(--glass-border); position:sticky; top:0; z-index:100; flex-shrink:0; }
+.nav h1 { font-family:'Playfair Display',serif; background:var(--accent-blue);
+ -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+
+.page { padding:30px 5%; max-width:1200px; margin:0 auto; flex:1; overflow-y:auto; width:100%; }
+.card { background:var(--glass-bg); backdrop-filter:blur(20px);
+     padding:30px; border-radius:var(--radius); margin-bottom:30px; 
+     border:1px solid var(--glass-border); position:relative; overflow:hidden; }
+.card::before { content:''; position:absolute; top:0; left:0; right:0;
+ height:4px; background:var(--accent-blue); }
+
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:25px; margin:30px 0; }
+.box { background:var(--glass-bg); padding:25px; border-radius:20px; border:1px solid var(--glass-border); cursor:pointer; transition:0.3s; }
+.box:hover { transform:translateY(-5px); background:rgba(255,255,255,0.15); }
+
+input, textarea, select { width:100%; padding:15px; margin:10px 0; border-radius:12px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.05); color:inherit; font-family:inherit; }
+
+button { padding:14px 25px; border:none; border-radius:12px; font-weight:600; cursor:pointer; transition:0.3s; }
+.btn-primary { background:var(--accent-blue); color:white; }
+.btn-primary:hover { opacity:0.9; transform:scale(1.02); }
+
+.timer { font-size:5rem; font-weight:800; text-align:center; margin:20px 0; font-variant-numeric: tabular-nums; }
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:20px; margin-bottom:30px; }
+.stat-card { background:rgba(255,255,255,0.05); padding:20px; border-radius:15px; text-align:center; border:1px solid var(--glass-border); }
+.stat-number { font-size:2rem; font-weight:700; color:var(--accent-cyan); }
+
+.calendar-day:hover { transform:scale(1.05); background:rgba(255,255,255,0.1) !important; }
+
+@media (max-width:768px) { .nav { flex-direction:column; gap:10px; } .links { font-size:0.9rem; gap:10px; } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('aurelia_auth') === 'true');
+  const [page, setPage] = useState('home');
+  const [theme, setTheme] = useState(() => localStorage.getItem('aurelia_theme') || 'dark');
+  const [currentUser, setCurrentUser] = useState(() => localStorage.getItem('aurelia_user') || 'admin');
+  
+  // Profile State
+  const [profile, setProfile] = useState(() => {
+    const saved = localStorage.getItem('aurelia_profile');
+    return saved ? JSON.parse(saved) : { name: '', email: '', bio: '', target_exam: '', username: currentUser };
+  });
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  
+  // Persistent Data States
+  const [notes, setNotes] = useState(() => localStorage.getItem('aurelia_notes') || '');
+  const [exam, setExam] = useState(() => localStorage.getItem('aurelia_exam') || '');
+  const [days, setDays] = useState(() => localStorage.getItem('aurelia_days') || '');
+  const [hours, setHours] = useState(() => localStorage.getItem('aurelia_hours') || '');
+  const [plan, setPlan] = useState(() => localStorage.getItem('aurelia_plan') || '');
+  const [userStats, setUserStats] = useState(() => {
+    const saved = localStorage.getItem('aurelia_stats');
+    return saved ? JSON.parse(saved) : { sessions: 0, totalHours: 0, streak: 1 };
+  });
+
+  const [time, setTime] = useState(0);
+  const [isActive, setIsActive] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSavingNotes, setIsSavingNotes] = useState(false);
+  const [loginUsername, setLoginUsername] = useState('admin');
+  const [loginPassword, setLoginPassword] = useState('password');
+  
+  // Calendar States
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [events, setEvents] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [newEvent, setNewEvent] = useState({ title: '', description: '', category: 'study', time: '09:00' });
+  
+  // Daily Schedule States
+  const [dailyTasks, setDailyTasks] = useState([]);
+  const [selectedScheduleDate, setSelectedScheduleDate] = useState(new Date().toISOString().split('T')[0]);
+  const [newTask, setNewTask] = useState({ time: '09:00', task: '', subject: '', duration: 30, priority: 'medium' });
+  
+  // Progress Report States
+  const [progressReport, setProgressReport] = useState(null);
+  const [reportDays, setReportDays] = useState(7);
+
+  // Fetch notes from backend on mount
+  useEffect(() => {
+    if (isLoggedIn && currentUser) {
+      fetchNotesFromBackend();
+    }
+  }, [isLoggedIn, currentUser]);
+
+  const fetchNotesFromBackend = async () => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/get-notes/${currentUser}`);
+      if (response.ok) {
+        const data = await response.json();
+        setNotes(data.notes);
+        alert('Notes loaded from cloud!');
+      }
+    } catch (error) {
+      console.log('Backend not available, using local storage');
+    }
+  };
+
+  const saveNotesToBackend = async () => {
+    setIsSavingNotes(true);
+    try {
+      const response = await fetch(`http://localhost:3001/api/save-notes/${currentUser}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes })
+      });
+      if (response.ok) {
+        alert('Notes saved to cloud!');
+      }
+    } catch (error) {
+      console.log('Backend not available, saved locally');
+    }
+    setIsSavingNotes(false);
+  };
+
+  // Sync with LocalStorage
+  useEffect(() => {
+    localStorage.setItem('aurelia_auth', isLoggedIn);
+    localStorage.setItem('aurelia_theme', theme);
+    localStorage.setItem('aurelia_user', currentUser);
+    localStorage.setItem('aurelia_profile', JSON.stringify(profile));
+    localStorage.setItem('aurelia_notes', notes);
+    localStorage.setItem('aurelia_exam', exam);
+    localStorage.setItem('aurelia_days', days);
+    localStorage.setItem('aurelia_hours', hours);
+    localStorage.setItem('aurelia_plan', plan);
+    localStorage.setItem('aurelia_stats', JSON.stringify(userStats));
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [isLoggedIn, theme, currentUser, profile, notes, exam, days, hours, plan, userStats]);
+
+  // Timer Effect
+  useEffect(() => {
+    let interval = null;
+    if (isActive && time > 0) {
+      interval = setInterval(() => setTime(prev => prev - 1), 1000);
+    } else if (time === 0) {
+      setIsActive(false);
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [isActive, time]);
+
+  const formatTime = (seconds) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const handleGeneratePlan = () => {
+    if (!exam || !days || !hours) return alert("Please fill all fields");
+    const schedule = {
+      'JEE': 'Phy: Mechanics (2h), Chem: Organic (2h), Math: Calculus (3h)',
+      'NEET': 'Bio: Genetics (3h), Phy: Optics (2h), Chem: Equilibrium (2h)',
+      'UPSC': 'History: Modern (3h), Polity: Articles (2h), CA: Daily News (2h)',
+      'GATE': 'Math: Linear Algebra (2h), Tech Sub 1 (3h), Aptitude (1h)',
+      'AL': 'Mathematics (2h), Physics (2h), Chemistry (2h), Revision (1h)'
+    };
+    const base = schedule[exam.split(' ')[0]] || 'Core Subjects (4h), Practice (2h), Revision (1h)';
+    const generated = `📅 ${days}-Day Fast Track for ${exam}\nDaily Goal: ${hours} hours\n\nDaily Routine:\n- ${base}\n\nPro Tip: Take a 10m break every 50m.`;
+    setPlan(generated);
+  };
+
+  const logSession = async () => {
+    setUserStats(prev => ({
+      ...prev,
+      sessions: prev.sessions + 1,
+      totalHours: parseFloat((prev.totalHours + 0.5).toFixed(1))
+    }));
+    
+    // Save to backend
+    try {
+      const response = await fetch(`http://localhost:3001/api/update-stats/${currentUser}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (response.ok) {
+        alert("Session logged to profile!");
+      }
+    } catch (error) {
+      console.log('Backend not available, logged locally');
+      alert("Session logged locally!");
+    }
+  };
+
+  const handleLogin = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: loginUsername, password: loginPassword })
+      });
+      
+      if (response.ok) {
+        setCurrentUser(loginUsername);
+        setIsLoggedIn(true);
+        // Load notes after login
+        setTimeout(() => {
+          fetchNotesFromBackend();
+        }, 100);
+      } else {
+        alert('Invalid credentials');
+      }
+    } catch (error) {
+      // Fallback for demo mode
+      setCurrentUser(loginUsername);
+      setIsLoggedIn(true);
+      console.log('Backend not available, logging in locally');
+    }
+  };
+
+  // Calendar Functions
+  const getDaysInMonth = (date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  };
+
+  const fetchMonthEvents = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:3001/api/get-all-events/${currentUser}/${currentMonth.getFullYear()}/${currentMonth.getMonth() + 1}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setEvents(data.events);
+      }
+    } catch (error) {
+      console.log('Could not fetch events');
+    }
+  };
+
+  const handleCreateEvent = async () => {
+    if (!selectedDate || !newEvent.title) {
+      alert('Please select date and enter title');
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:3001/api/create-event/${currentUser}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: selectedDate,
+          title: newEvent.title,
+          description: newEvent.description,
+          category: newEvent.category,
+          time: newEvent.time
+        })
+      });
+
+      if (response.ok) {
+        alert('Event created!');
+        setNewEvent({ title: '', description: '', category: 'study', time: '09:00' });
+        setSelectedDate(null);
+        fetchMonthEvents();
+      }
+    } catch (error) {
+      console.log('Could not create event');
+      alert('Failed to create event');
+    }
+  };
+
+  const hasEvent = (day) => {
+    const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return events.some(e => e.date === dateStr);
+  };
+
+  const getDayEvents = (day) => {
+    const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return events.filter(e => e.date === dateStr);
+  };
+
+  // Load events when month changes
+  useEffect(() => {
+    if (isLoggedIn && currentUser) {
+      fetchMonthEvents();
+    }
+  }, [currentMonth]);
+
+  // Daily Schedule Functions
+  const fetchDailyTasks = async (date) => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/get-daily-tasks/${currentUser}/${date}`);
+      if (response.ok) {
+        const data = await response.json();
+        setDailyTasks(data.tasks);
+      }
+    } catch (error) {
+      console.log('Could not fetch daily tasks');
+    }
+  };
+
+  const handleCreateDailyTask = async () => {
+    if (!newTask.time || !newTask.task) {
+      alert('Please fill time and task');
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:3001/api/create-daily-task/${currentUser}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: selectedScheduleDate,
+          time: newTask.time,
+          task: newTask.task,
+          subject: newTask.subject,
+          duration: parseInt(newTask.duration),
+          priority: newTask.priority
+        })
+      });
+
+      if (response.ok) {
+        setNewTask({ time: '09:00', task: '', subject: '', duration: 30, priority: 'medium' });
+        fetchDailyTasks(selectedScheduleDate);
+      }
+    } catch (error) {
+      console.log('Could not create task');
+    }
+  };
+
+  const handleToggleTaskComplete = async (taskId, currentCompleted) => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/update-daily-task/${currentUser}/${taskId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed: !currentCompleted })
+      });
+
+      if (response.ok) {
+        fetchDailyTasks(selectedScheduleDate);
+      }
+    } catch (error) {
+      console.log('Could not toggle task');
+    }
+  };
+
+  const handleDeleteDailyTask = async (taskId) => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/delete-daily-task/${currentUser}/${taskId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        fetchDailyTasks(selectedScheduleDate);
+      }
+    } catch (error) {
+      console.log('Could not delete task');
+    }
+  };
+
+  // Load tasks when selected schedule date changes
+  useEffect(() => {
+    if (isLoggedIn && currentUser && selectedScheduleDate) {
+      fetchDailyTasks(selectedScheduleDate);
+    }
+  }, [selectedScheduleDate]);
+
+  // Progress Report Functions
+  const fetchProgressReport = async (days) => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/get-progress-report/${currentUser}/${days}`);
+      if (response.ok) {
+        const data = await response.json();
+        setProgressReport(data);
+      }
+    } catch (error) {
+      console.log('Could not fetch progress report');
+    }
+  };
+
+  // Load progress report on page change
+  useEffect(() => {
+    if (isLoggedIn && currentUser && page === 'progress') {
+      fetchProgressReport(reportDays);
+    }
+  }, [page, reportDays]);
+
+  if (!isLoggedIn) {
+    return (
+      <div className="login">
+        <div className="login-box">
+          <h1>Aurelia Pro</h1>
+          <p style={{marginBottom: '20px'}}>Your AI Study Companion</p>
+          <input 
+            type="text" 
+            placeholder="Username" 
+            value={loginUsername}
+            onChange={(e) => setLoginUsername(e.target.value)}
+          />
+          <input 
+            type="password" 
+            placeholder="Password" 
+            value={loginPassword}
+            onChange={(e) => setLoginPassword(e.target.value)}
+          />
+          <button className="btn-primary" style={{width:'100%'}} onClick={handleLogin}>Login</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <nav className="nav">
+        <h1 onClick={() => setPage('home')} style={{cursor:'pointer'}}>Aurelia</h1>
+        <div className="links" style={{display:'flex', gap:'20px'}}>
+          <span onClick={() => setPage('home')}><i className="fas fa-home"></i></span>
+          <span onClick={() => setPage('notes')}><i className="fas fa-edit"></i></span>
+          <span onClick={() => setPage('planner')}><i className="fas fa-calendar-alt"></i></span>
+          <span onClick={() => setPage('calendar')}><i className="fas fa-calendar"></i></span>
+          <span onClick={() => setPage('daily-schedule')}><i className="fas fa-list-check"></i></span>
+          <span onClick={() => setPage('progress')}><i className="fas fa-chart-line"></i></span>
+          <span onClick={() => setPage('timer')}><i className="fas fa-clock"></i></span>
+          <span onClick={() => setPage('profile')}><i className="fas fa-user"></i></span>
+          <span onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+            {theme === 'dark' ? <i className="fas fa-sun"></i> : <i className="fas fa-moon"></i>}
+          </span>
+          <span onClick={() => setIsLoggedIn(false)}><i className="fas fa-sign-out-alt"></i></span>
+        </div>
+      </nav>
+
+      <div className="page">
+        {page === 'home' && (
+          <div>
+            <div className="card">
+              <h2>Welcome back, Student!</h2>
+              <p>Keep the momentum going. You've studied {userStats.totalHours} hours so far.</p>
+            </div>
+            <div className="stats-grid">
+              <div className="stat-card">
+                <div className="stat-number">{userStats.sessions}</div>
+                <p>Sessions</p>
+              </div>
+              <div className="stat-card">
+                <div className="stat-number">{userStats.totalHours}h</div>
+                <p>Study Time</p>
+              </div>
+              <div className="stat-card">
+                <div className="stat-number">{userStats.streak}🔥</div>
+                <p>Day Streak</p>
+              </div>
+            </div>
+            <div className="grid">
+              <div className="box" onClick={() => setPage('planner')}>
+                <h3>AI Planner</h3>
+                <p>Generate a custom path for {exam || 'your exam (JEE, NEET, UPSC, GATE, AL)'}</p>
+              </div>
+              <div className="box" onClick={() => setPage('notes')}>
+                <h3>Quick Notes</h3>
+                <p>Capture thoughts instantly. AI organized.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {page === 'notes' && (
+          <div className="card">
+            <h2>Smart Notes</h2>
+            <input 
+              placeholder="Search notes..." 
+              value={searchQuery} 
+              onChange={(e) => setSearchQuery(e.target.value)} 
+            />
+            <textarea 
+              rows="12" 
+              value={notes} 
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Start typing your study notes here..."
+            />
+            {searchQuery && (
+              <div style={{marginTop: '20px', background:'rgba(0,0,0,0.2)', padding:'15px', borderRadius:'10px'}}>
+                <h4 style={{color:'var(--accent-cyan)', marginBottom:'10px'}}>Search Results for: "{searchQuery}"</h4>
+                {notes.split('\n').map((line, idx) => 
+                  line.toLowerCase().includes(searchQuery.toLowerCase()) && (
+                    <div 
+                      key={idx} 
+                      style={{
+                        marginBottom: '8px', 
+                        padding: '10px',
+                        background: 'rgba(6,182,212,0.1)',
+                        borderLeft: '3px solid var(--accent-cyan)',
+                        color: 'var(--text-primary)'
+                      }}
+                    >
+                      {line.split(new RegExp(`(${searchQuery})`, 'gi')).map((part, i) => 
+                        part.toLowerCase() === searchQuery.toLowerCase() 
+                          ? <span key={i} style={{background:'var(--accent-cyan)', color:'black', fontWeight:'bold', padding:'2px 4px', borderRadius:'4px'}}>{part}</span>
+                          : <span key={i}>{part}</span>
+                      )}
+                    </div>
+                  )
+                ).filter(result => result)}
+                <p style={{marginTop:'10px', fontSize:'0.9rem', color:'var(--text-secondary)'}}>
+                  Found {notes.split('\n').filter(line => line.toLowerCase().includes(searchQuery.toLowerCase())).length} matching lines
+                </p>
+              </div>
+            )}
+            <div style={{display:'flex', gap:'10px', marginTop:'15px'}}>
+              <button className="btn-primary" onClick={saveNotesToBackend} disabled={isSavingNotes}>
+                {isSavingNotes ? '💾 Saving...' : '💾 Save Notes to Cloud'}
+              </button>
+              <button onClick={fetchNotesFromBackend} style={{background:'var(--accent-cyan)', color:'white', padding:'14px 25px', border:'none', borderRadius:'12px', cursor:'pointer'}}>
+                🔄 Load from Cloud
+              </button>
+            </div>
+          </div>
+        )}
+
+        {page === 'planner' && (
+          <div className="card">
+            <h2>AI Study Planner</h2>
+            <select value={exam} onChange={(e) => setExam(e.target.value)}>
+              <option value="">Select Target Exam</option>
+              <option value="JEE Main">JEE Main/Advanced</option>
+              <option value="NEET UG">NEET UG</option>
+              <option value="UPSC CSE">UPSC CSE</option>
+              <option value="GATE">GATE</option>
+              <option value="AL">AL (Advanced Level)</option>
+            </select>
+            <input type="number" placeholder="Days remaining" value={days} onChange={(e) => setDays(e.target.value)} />
+            <input type="number" placeholder="Study hours per day" value={hours} onChange={(e) => setHours(e.target.value)} />
+            <button className="btn-primary" onClick={handleGeneratePlan}>Generate AI Plan</button>
+            {plan && <pre style={{marginTop:'20px', whiteSpace:'pre-wrap', background:'rgba(0,0,0,0.2)', padding:'15px', borderRadius:'10px'}}>{plan}</pre>}
+          </div>
+        )}
+
+        {page === 'timer' && (
+          <div className="card" style={{textAlign:'center'}}>
+            <h2>Focus Timer</h2>
+            <div className="timer">{formatTime(time)}</div>
+            <div style={{display:'flex', gap:'10px', justifyContent:'center', flexWrap:'wrap'}}>
+              <button onClick={() => setTime(25*60)}>25m</button>
+              <button onClick={() => setTime(50*60)}>50m</button>
+              <button className="btn-primary" onClick={() => setIsActive(!isActive)}>
+                {isActive ? 'Pause' : 'Start'}
+              </button>
+              <button onClick={() => {setTime(0); setIsActive(false)}}>Reset</button>
+              <button onClick={logSession} style={{background:'var(--accent-green)', color:'white'}}>Log Session</button>
+            </div>
+          </div>
+        )}
+
+        {page === 'calendar' && (
+          <div className="card">
+            <h2>📅 Schedule & Calendar</h2>
+            
+            {/* Calendar Header */}
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'20px'}}>
+              <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}>← Prev</button>
+              <h3>{currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}</h3>
+              <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}>Next →</button>
+            </div>
+
+            {/* Calendar Grid */}
+            <div style={{display:'grid', gridTemplateColumns:'repeat(7, 1fr)', gap:'10px', marginBottom:'20px'}}>
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => 
+                <div key={day} style={{textAlign:'center', fontWeight:'bold', padding:'10px', color:'var(--accent-cyan)'}}>
+                  {day}
+                </div>
+              )}
+              
+              {Array.from({length: getFirstDayOfMonth(currentMonth)}).map((_, i) => 
+                <div key={`empty-${i}`} style={{padding:'10px'}}></div>
+              )}
+              
+              {Array.from({length: getDaysInMonth(currentMonth)}).map((_, i) => {
+                const day = i + 1;
+                const hasEventToday = hasEvent(day);
+                const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const isSelected = selectedDate === dateStr;
+                
+                return (
+                  <div
+                    key={day}
+                    onClick={() => setSelectedDate(dateStr)}
+                    style={{
+                      padding:'10px',
+                      textAlign:'center',
+                      border:'1px solid var(--glass-border)',
+                      borderRadius:'8px',
+                      cursor:'pointer',
+                      background: isSelected ? 'var(--accent-blue)' : hasEventToday ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.05)',
+                      transition:'0.3s',
+                      position:'relative'
+                    }}
+                    className="calendar-day"
+                  >
+                    <div style={{fontWeight: hasEventToday ? 'bold' : 'normal'}}>{day}</div>
+                    {hasEventToday && <div style={{fontSize:'0.7rem', color:'var(--accent-green)'}}>●</div>}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Event Creation */}
+            <div style={{background:'rgba(0,0,0,0.2)', padding:'15px', borderRadius:'10px', marginBottom:'20px'}}>
+              <h4 style={{marginBottom:'10px'}}>Add Event {selectedDate && `(${selectedDate})`}</h4>
+              <input 
+                type="text" 
+                placeholder="Event Title" 
+                value={newEvent.title}
+                onChange={(e) => setNewEvent({...newEvent, title: e.target.value})}
+              />
+              <input 
+                type="time" 
+                value={newEvent.time}
+                onChange={(e) => setNewEvent({...newEvent, time: e.target.value})}
+              />
+              <textarea 
+                placeholder="Description" 
+                rows="2"
+                value={newEvent.description}
+                onChange={(e) => setNewEvent({...newEvent, description: e.target.value})}
+              />
+              <select 
+                value={newEvent.category}
+                onChange={(e) => setNewEvent({...newEvent, category: e.target.value})}
+              >
+                <option value="study">Study</option>
+                <option value="exam">Exam</option>
+                <option value="break">Break</option>
+                <option value="revision">Revision</option>
+              </select>
+              <button className="btn-primary" onClick={handleCreateEvent} style={{marginTop:'10px', width:'100%'}}>
+                Add Event
+              </button>
+            </div>
+
+            {/* Events Display */}
+            {selectedDate && getDayEvents(parseInt(selectedDate.split('-')[2])).length > 0 && (
+              <div style={{background:'rgba(0,0,0,0.2)', padding:'15px', borderRadius:'10px'}}>
+                <h4 style={{color:'var(--accent-cyan)', marginBottom:'10px'}}>Events on {selectedDate}</h4>
+                {getDayEvents(parseInt(selectedDate.split('-')[2])).map(event => (
+                  <div key={event.id} style={{
+                    background:'rgba(255,255,255,0.05)',
+                    padding:'10px',
+                    borderRadius:'8px',
+                    marginBottom:'8px',
+                    borderLeft: `3px solid ${event.category === 'exam' ? 'var(--accent-orange)' : event.category === 'study' ? 'var(--accent-blue)' : 'var(--accent-green)'}`
+                  }}>
+                    <div style={{fontWeight:'bold'}}>{event.time} - {event.title}</div>
+                    <div style={{fontSize:'0.9rem', color:'var(--text-secondary)'}}>{event.category}</div>
+                    {event.description && <div style={{fontSize:'0.85rem', marginTop:'5px'}}>{event.description}</div>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {page === 'profile' && (
+          <div className="card">
+            <h2>My Profile</h2>
+            {!isEditingProfile ? (
+              <div>
+                <div style={{marginBottom: '20px'}}>
+                  <div style={{fontSize: '3rem', marginBottom: '10px', color: 'var(--accent-cyan)'}}>
+                    <i className="fas fa-user-circle"></i>
+                  </div>
+                  <p><strong>Username:</strong> {profile.username}</p>
+                  <p><strong>Name:</strong> {profile.name || 'Not set'}</p>
+                  <p><strong>Email:</strong> {profile.email || 'Not set'}</p>
+                  <p><strong>Bio:</strong> {profile.bio || 'No bio'}</p>
+                  <p><strong>Target Exam:</strong> {profile.target_exam || 'Not set'}</p>
+                </div>
+                <div className="stats-grid" style={{marginTop: '20px'}}>
+                  <div className="stat-card">
+                    <div className="stat-number">{userStats.sessions}</div>
+                    <p>Sessions</p>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-number">{userStats.totalHours}h</div>
+                    <p>Study Time</p>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-number">{userStats.streak}🔥</div>
+                    <p>Streak</p>
+                  </div>
+                </div>
+                <button className="btn-primary" onClick={() => setIsEditingProfile(true)} style={{marginTop: '20px'}}>Edit Profile</button>
+              </div>
+            ) : (
+              <div>
+                <input 
+                  type="text" 
+                  placeholder="Full Name" 
+                  value={profile.name} 
+                  onChange={(e) => setProfile({...profile, name: e.target.value})} 
+                />
+                <input 
+                  type="email" 
+                  placeholder="Email" 
+                  value={profile.email} 
+                  onChange={(e) => setProfile({...profile, email: e.target.value})} 
+                />
+                <textarea 
+                  placeholder="Bio" 
+                  rows="3" 
+                  value={profile.bio} 
+                  onChange={(e) => setProfile({...profile, bio: e.target.value})} 
+                />
+                <select 
+                  value={profile.target_exam} 
+                  onChange={(e) => setProfile({...profile, target_exam: e.target.value})}
+                >
+                  <option value="">Select Target Exam</option>
+                  <option value="JEE">JEE Main/Advanced</option>
+                  <option value="NEET">NEET UG</option>
+                  <option value="UPSC">UPSC CSE</option>
+                  <option value="GATE">GATE</option>
+                  <option value="AL">AL (Advanced Level)</option>
+                </select>
+                <div style={{display:'flex', gap:'10px', marginTop: '20px'}}>
+                  <button className="btn-primary" onClick={() => setIsEditingProfile(false)}>Save</button>
+                  <button onClick={() => setIsEditingProfile(false)} style={{background:'var(--accent-purple)', color:'white', padding:'14px 25px', border:'none', borderRadius:'12px', cursor:'pointer'}}>Cancel</button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {page === 'daily-schedule' && (
+          <div className="card">
+            <h2>⏰ Daily Schedule Planner</h2>
+            
+            {/* Date Selector */}
+            <div style={{marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center'}}>
+              <label style={{fontWeight: 'bold'}}>Select Date:</label>
+              <input 
+                type="date" 
+                value={selectedScheduleDate}
+                onChange={(e) => setSelectedScheduleDate(e.target.value)}
+                style={{flex: 1}}
+              />
+              <button onClick={() => setSelectedScheduleDate(new Date().toISOString().split('T')[0])} style={{background: 'var(--accent-cyan)', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '8px', cursor: 'pointer'}}>
+                Today
+              </button>
+            </div>
+
+            {/* Time Schedule Grid */}
+            <div style={{background: 'rgba(0,0,0,0.2)', padding: '20px', borderRadius: '10px', marginBottom: '20px'}}>
+              <h4 style={{color: 'var(--accent-cyan)', marginBottom: '15px'}}>Schedule for {selectedScheduleDate}</h4>
+              
+              {dailyTasks.length === 0 ? (
+                <div style={{textAlign: 'center', color: 'var(--text-secondary)', padding: '20px'}}>
+                  No tasks scheduled for this day
+                </div>
+              ) : (
+                <div style={{display: 'grid', gap: '10px'}}>
+                  {dailyTasks.map(task => (
+                    <div
+                      key={task.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '12px',
+                        background: task.completed ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.05)',
+                        borderRadius: '8px',
+                        borderLeft: `4px solid ${
+                          task.priority === 'high' ? 'var(--accent-orange)' : 
+                          task.priority === 'medium' ? 'var(--accent-blue)' : 
+                          'var(--accent-green)'
+                        }`,
+                        opacity: task.completed ? 0.6 : 1
+                      }}
+                    >
+                      <input 
+                        type="checkbox" 
+                        checked={task.completed}
+                        onChange={() => handleToggleTaskComplete(task.id, task.completed)}
+                        style={{width: '20px', height: '20px', cursor: 'pointer'}}
+                      />
+                      <div style={{flex: 1}}>
+                        <div style={{fontWeight: 'bold', textDecoration: task.completed ? 'line-through' : 'none'}}>
+                          {task.time} - {task.task}
+                        </div>
+                        <div style={{fontSize: '0.85rem', color: 'var(--text-secondary)'}}>
+                          {task.subject && `📚 ${task.subject}`} {task.duration && `| ⏱️ ${task.duration}min`}
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => handleDeleteDailyTask(task.id)}
+                        style={{background: 'var(--accent-purple)', color: 'white', padding: '6px 12px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem'}}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Add Task Form */}
+            <div style={{background: 'rgba(6,182,212,0.1)', padding: '20px', borderRadius: '10px', border: '1px solid var(--accent-cyan)'}}>
+              <h4 style={{color: 'var(--accent-cyan)', marginBottom: '15px'}}>Add Task to Schedule</h4>
+              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px'}}>
+                <div>
+                  <label style={{fontSize: '0.9rem', color: 'var(--text-secondary)'}}>Time</label>
+                  <input 
+                    type="time" 
+                    value={newTask.time}
+                    onChange={(e) => setNewTask({...newTask, time: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <label style={{fontSize: '0.9rem', color: 'var(--text-secondary)'}}>Duration (min)</label>
+                  <input 
+                    type="number" 
+                    value={newTask.duration}
+                    onChange={(e) => setNewTask({...newTask, duration: e.target.value})}
+                    min="5"
+                    max="480"
+                  />
+                </div>
+              </div>
+              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px'}}>
+                <input 
+                  type="text" 
+                  placeholder="Task Name" 
+                  value={newTask.task}
+                  onChange={(e) => setNewTask({...newTask, task: e.target.value})}
+                />
+                <input 
+                  type="text" 
+                  placeholder="Subject (e.g., Physics, Math)" 
+                  value={newTask.subject}
+                  onChange={(e) => setNewTask({...newTask, subject: e.target.value})}
+                />
+              </div>
+              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px'}}>
+                <select 
+                  value={newTask.priority}
+                  onChange={(e) => setNewTask({...newTask, priority: e.target.value})}
+                >
+                  <option value="low">Low Priority</option>
+                  <option value="medium">Medium Priority</option>
+                  <option value="high">High Priority</option>
+                </select>
+                <button className="btn-primary" onClick={handleCreateDailyTask} style={{width: '100%'}}>
+                  Add Task
+                </button>
+              </div>
+            </div>
+
+            {/* Schedule Summary */}
+            {dailyTasks.length > 0 && (
+              <div style={{marginTop: '20px', padding: '15px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px'}}>
+                <h4 style={{color: 'var(--accent-green)', marginBottom: '10px'}}>Today's Summary</h4>
+                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', fontSize: '0.9rem'}}>
+                  <div>
+                    <div style={{color: 'var(--text-secondary)'}}>Total Tasks</div>
+                    <div style={{fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--accent-cyan)'}}>{dailyTasks.length}</div>
+                  </div>
+                  <div>
+                    <div style={{color: 'var(--text-secondary)'}}>Completed</div>
+                    <div style={{fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--accent-green)'}}>{dailyTasks.filter(t => t.completed).length}</div>
+                  </div>
+                  <div>
+                    <div style={{color: 'var(--text-secondary)'}}>Total Duration</div>
+                    <div style={{fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--accent-orange)'}}>
+                      {dailyTasks.reduce((sum, t) => sum + t.duration, 0)}min
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {page === 'progress' && (
+          <div className="card">
+            <h2>📊 Progress Report & Analytics</h2>
+            
+            {/* Time Period Selection */}
+            <div style={{display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap'}}>
+              <button 
+                onClick={() => setReportDays(7)}
+                style={{background: reportDays === 7 ? 'var(--accent-blue)' : 'rgba(255,255,255,0.1)', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '8px', cursor: 'pointer'}}
+              >
+                Last 7 Days
+              </button>
+              <button 
+                onClick={() => setReportDays(14)}
+                style={{background: reportDays === 14 ? 'var(--accent-blue)' : 'rgba(255,255,255,0.1)', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '8px', cursor: 'pointer'}}
+              >
+                Last 14 Days
+              </button>
+              <button 
+                onClick={() => setReportDays(30)}
+                style={{background: reportDays === 30 ? 'var(--accent-blue)' : 'rgba(255,255,255,0.1)', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '8px', cursor: 'pointer'}}
+              >
+                Last 30 Days
+              </button>
+              <button 
+                onClick={() => setReportDays(90)}
+                style={{background: reportDays === 90 ? 'var(--accent-blue)' : 'rgba(255,255,255,0.1)', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '8px', cursor: 'pointer'}}
+              >
+                Last 90 Days
+              </button>
+            </div>
+
+            {progressReport ? (
+              <>
+                {/* Main Statistics */}
+                <div className="stats-grid" style={{marginBottom: '30px'}}>
+                  <div className="stat-card">
+                    <div className="stat-number" style={{color: 'var(--accent-green)'}}>{progressReport.stats.total_completed_tasks}</div>
+                    <p>Tasks Completed</p>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-number" style={{color: 'var(--accent-blue)'}}>{progressReport.stats.completion_rate}%</div>
+                    <p>Completion Rate</p>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-number" style={{color: 'var(--accent-cyan)'}}>{progressReport.stats.total_study_hours}h</div>
+                    <p>Study Hours</p>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-number" style={{color: 'var(--accent-orange)'}}>{progressReport.stats.sessions}</div>
+                    <p>Sessions</p>
+                  </div>
+                </div>
+
+                {/* Detailed Statistics */}
+                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px'}}>
+                  <div style={{background: 'rgba(0,0,0,0.2)', padding: '20px', borderRadius: '10px'}}>
+                    <h4 style={{color: 'var(--accent-cyan)', marginBottom: '15px'}}>📈 Task Statistics</h4>
+                    <div style={{display: 'grid', gap: '10px'}}>
+                      <div style={{display: 'flex', justifyContent: 'space-between', paddingBottom: '10px', borderBottom: '1px solid var(--glass-border)'}}>
+                        <span>Total Tasks</span>
+                        <span style={{fontWeight: 'bold', color: 'var(--accent-cyan)'}}>{progressReport.stats.total_tasks}</span>
+                      </div>
+                      <div style={{display: 'flex', justifyContent: 'space-between', paddingBottom: '10px', borderBottom: '1px solid var(--glass-border)'}}>
+                        <span>Completed</span>
+                        <span style={{fontWeight: 'bold', color: 'var(--accent-green)'}}>{progressReport.stats.total_completed_tasks}</span>
+                      </div>
+                      <div style={{display: 'flex', justifyContent: 'space-between', paddingBottom: '10px', borderBottom: '1px solid var(--glass-border)'}}>
+                        <span>Not Completed</span>
+                        <span style={{fontWeight: 'bold', color: 'var(--accent-orange)'}}>{progressReport.stats.total_tasks - progressReport.stats.total_completed_tasks}</span>
+                      </div>
+                      <div style={{display: 'flex', justifyContent: 'space-between', paddingBottom: '10px'}}>
+                        <span>Completion Rate</span>
+                        <span style={{fontWeight: 'bold', color: 'var(--accent-blue)'}}>{progressReport.stats.completion_rate}%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{background: 'rgba(0,0,0,0.2)', padding: '20px', borderRadius: '10px'}}>
+                    <h4 style={{color: 'var(--accent-cyan)', marginBottom: '15px'}}>⏱️ Study Time</h4>
+                    <div style={{display: 'grid', gap: '10px'}}>
+                      <div style={{display: 'flex', justifyContent: 'space-between', paddingBottom: '10px', borderBottom: '1px solid var(--glass-border)'}}>
+                        <span>Total Study Hours</span>
+                        <span style={{fontWeight: 'bold', color: 'var(--accent-cyan)'}}>{progressReport.stats.total_study_hours}h</span>
+                      </div>
+                      <div style={{display: 'flex', justifyContent: 'space-between', paddingBottom: '10px', borderBottom: '1px solid var(--glass-border)'}}>
+                        <span>Total Minutes</span>
+                        <span style={{fontWeight: 'bold', color: 'var(--accent-blue)'}}>{progressReport.stats.total_study_minutes}m</span>
+                      </div>
+                      <div style={{display: 'flex', justifyContent: 'space-between', paddingBottom: '10px', borderBottom: '1px solid var(--glass-border)'}}>
+                        <span>Daily Average</span>
+                        <span style={{fontWeight: 'bold', color: 'var(--accent-green)'}}>
+                          {(progressReport.stats.total_study_hours / reportDays).toFixed(1)}h
+                        </span>
+                      </div>
+                      <div style={{display: 'flex', justifyContent: 'space-between', paddingBottom: '10px'}}>
+                        <span>Events Scheduled</span>
+                        <span style={{fontWeight: 'bold', color: 'var(--accent-orange)'}}>{progressReport.stats.total_events}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Subject Breakdown */}
+                {Object.keys(progressReport.subject_breakdown).length > 0 && (
+                  <div style={{background: 'rgba(0,0,0,0.2)', padding: '20px', borderRadius: '10px', marginBottom: '30px'}}>
+                    <h4 style={{color: 'var(--accent-cyan)', marginBottom: '15px'}}>📚 Subject Breakdown</h4>
+                    <div style={{display: 'grid', gap: '10px'}}>
+                      {Object.entries(progressReport.subject_breakdown).map(([subject, data]) => (
+                        <div key={subject} style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '10px', borderBottom: '1px solid var(--glass-border)'}}>
+                          <div>
+                            <div style={{fontWeight: 'bold'}}>{subject}</div>
+                            <div style={{fontSize: '0.85rem', color: 'var(--text-secondary)'}}>
+                              {data.count} tasks • {data.duration} min
+                            </div>
+                          </div>
+                          <div style={{fontWeight: 'bold', color: 'var(--accent-blue)'}}>
+                            {(data.duration / 60).toFixed(1)}h
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Period Info */}
+                <div style={{background: 'rgba(6,182,212,0.1)', padding: '15px', borderRadius: '10px', border: '1px solid var(--accent-cyan)', fontSize: '0.9rem', textAlign: 'center', color: 'var(--text-secondary)'}}>
+                  Report Period: {progressReport.start_date} to {progressReport.end_date} ({reportDays} days)
+                </div>
+              </>
+            ) : (
+              <div style={{textAlign: 'center', padding: '30px', color: 'var(--text-secondary)'}}>
+                Loading progress report...
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html> 
